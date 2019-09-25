@@ -3,6 +3,8 @@ int RawVoltagePin0 = 0;
 int RawVoltagePin1 = 0;
 float VoltagePin0 = 0;
 float VoltagePin1 = 0;
+float VoltageCountPin0 = 0.0;
+float VoltageCountPin1 = 0.0;
 
 // Analog Pins for Raw Voltage and Current
 int inputValue00 = A0;
@@ -13,11 +15,13 @@ int incomingByte = 0;
 const byte numChars = 32;
 char receivedChars[numChars];   // an array to store the received data
 boolean newData = false;
-float dataNumber = 0;   
+int dataNumber = 0;   
 
 // PWM
 int PWMPin = 9;
 float targetVoltage = 10;
+int outValue = 0;
+float subtraction = 0.0;
 
 
 void setup() {
@@ -34,66 +38,63 @@ void loop() {
 }
 
 void Write(float targetVoltage){
-  int outValue = 127;
+  outValue = 127;
   
   if(targetVoltage == 8)
-    outValue = 0;
+    outValue = 26;
   else if(targetVoltage == 8.5)
-    outValue = 31;
+    outValue = 53;
   else if(targetVoltage == 9)
-    outValue = 63;
+    outValue = 79;
   else if(targetVoltage == 9.5)
-    outValue = 95;
+    outValue = 103;
   else if(targetVoltage == 10)
     outValue = 127;
   else if(targetVoltage == 10.5)
-    outValue = 159;
+    outValue = 150;
   else if(targetVoltage == 11)
-    outValue = 191;
+    outValue = 173;
   else if(targetVoltage == 11.5)
-    outValue = 223;
+    outValue = 196;
   else
-    outValue = 255;
+    outValue = 220;
 
   analogWrite(PWMPin, outValue);
 }
 
 void computeAverageValues()
 {
-    float VoltageCountPin0,VoltageCountPin1 = 0.0;
-    
+    VoltageCountPin0 = 0.0;
+    VoltageCountPin1 = 0.0;
     for(int i = 0 ; i < 100 ; i ++)
     {
       // Read Voltage on Wiper
       RawVoltagePin0 = analogRead(inputValue00);
       RawVoltagePin1 = analogRead(inputValue01);
       
-      VoltagePin0 = (RawVoltagePin0 * 5.0 )/ 1024.0;
-      VoltagePin1 = (RawVoltagePin1 * 5.0 )/ 1024.0;
-      
+      VoltagePin0 = ((RawVoltagePin0 * 5.0 )/ 1024.0);
+      VoltagePin1 = ((RawVoltagePin1 * 5.0 )/ 1024.0);
+  
       VoltageCountPin0 = VoltageCountPin0+VoltagePin0;
       VoltageCountPin1 = VoltageCountPin1+VoltagePin1;
     }
     VoltageCountPin0 = VoltageCountPin0/100;
     VoltageCountPin1 = VoltageCountPin1/100;
 
-    //VoltageControl(VoltageCountPin0, VoltageCountPin1);
-    Print(VoltageCountPin0, VoltageCountPin1);
+    VoltageCountPin0 = VoltageCountPin0 * 2.61 + 0.0224;
+    VoltageCountPin1 = VoltageCountPin1 * 2.55 + 0.0843;
 }
 
-void VoltageControl(float param1, float param2)
-{
-  // compare expected to incoming
-  
-}
 
 void Print(float param1, float param2)
 {
-    Serial.print("\t Voltage0 = ");
-    Serial.println(param1,3);
-    Serial.print("\t Voltage1 = ");
-    Serial.println(param2,3);
-    delay(1000);
+  Serial.print("\t Voltage0 = ");
+  Serial.println(VoltageCountPin0);
+  Serial.print("\t Voltage1 = ");
+  Serial.println(VoltageCountPin1);
+  Serial.print("Current: ");
+  float current = VoltageCountPin1 - VoltageCountPin0;
+  Serial.println(current);
 }
 
 void checkForInput() 
@@ -133,13 +134,13 @@ void showNewNumber() {
     Serial.println(dataNumber);
     newData = false;
     handleInput(dataNumber);
-    computeAverageValues();
   }
 }
 
 void handleInput(int myDataNumber){
   if(myDataNumber == 0) {
     computeAverageValues();
+    Print(VoltageCountPin0, VoltageCountPin1);
   }
   else if(myDataNumber == 1){
     decrementTarget();
@@ -158,8 +159,11 @@ void decrementTarget(){
 
   Serial.print("Current Target: ");
   Serial.println(targetVoltage);
-  
+
   Write(targetVoltage);
+  
+  computeAverageValues();
+//  Print(VoltageCountPin0, VoltageCountPin1);
 }
 
 
@@ -171,6 +175,9 @@ void incrementTarget(){
 
   Serial.print("Current Target: ");
   Serial.println(targetVoltage);
-  
+
   Write(targetVoltage);
+  
+  computeAverageValues();
+//  Print(VoltageCountPin0, VoltageCountPin1);
 }
