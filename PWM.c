@@ -19,7 +19,7 @@ int dataNumber = 0;
 
 // PWM
 int PWMPin = 9;
-float targetVoltage = 10;
+float targetVoltage = 8;
 int outValue = 0;
 float subtraction = 0.0;
 
@@ -29,7 +29,7 @@ void setup() {
   Serial.println("<Arduino is ready>");
   Serial.println("Defaulting to 8 Volts");
   Serial.println("Type 2 to increase by 0.5 :: Type 1 to decrease by 0.5 :: Type 0 to display voltages");
-  analogWrite(PWMPin, 127);
+  analogWrite(PWMPin, 26);
 }
 
 void loop() {
@@ -88,13 +88,14 @@ void computeAverageValues()
 
 void Print(float param1, float param2)
 {
-  Serial.print("\t Voltage0 = ");
-  Serial.println(VoltageCountPin0);
-  Serial.print("\t Voltage1 = ");
-  Serial.println(VoltageCountPin1);
-  Serial.print("Current: ");
+  Serial.print("\t Voltage0ut:\t");
+  Serial.print(VoltageCountPin0);
+  Serial.println(" V");
+  Serial.print("\t Current:\t");
   float current = VoltageCountPin1 - VoltageCountPin0;
-  Serial.println(current);
+  current = current * 100;
+  Serial.print(current);
+  Serial.println(" mA");
 }
 
 void checkForInput() 
@@ -157,13 +158,13 @@ void decrementTarget(){
   else
     targetVoltage = targetVoltage - 0.5;
 
-  Serial.print("Current Target: ");
-  Serial.println(targetVoltage);
+  Serial.print("\tVoltage Target: ");
+  Serial.print(targetVoltage);
+  Serial.println(" V");
 
   Write(targetVoltage);
   
   computeAverageValues();
-//  Print(VoltageCountPin0, VoltageCountPin1);
 }
 
 
@@ -173,11 +174,11 @@ void incrementTarget(){
   else
     targetVoltage = targetVoltage + 0.5;
 
-  Serial.print("Current Target: ");
-  Serial.println(targetVoltage);
+  Serial.print("\t Voltage Target: ");
+  Serial.print(targetVoltage);
+  Serial.println(" V");
 
   Write(targetVoltage);
   
   computeAverageValues();
-//  Print(VoltageCountPin0, VoltageCountPin1);
 }
